@@ -1,0 +1,7 @@
+{
+  "name": "K&N AI Music Studio",
+  "description": "A professional AI-powered songwriting assistant that generates lyrics, Suno AI configurations, and melody suggestions using the latest Gemini models.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
