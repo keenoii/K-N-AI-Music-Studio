@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { SectionCard } from '../SharedUI';
+import { Disc } from 'lucide-react';
 
 interface GenrePickerProps {
   theme: 'dark' | 'light';
@@ -13,26 +14,27 @@ export const GenrePicker: React.FC<GenrePickerProps> = ({ theme, genres, selecte
   if (!genres || !Array.isArray(genres)) return null;
 
   return (
-    <SectionCard theme={theme}>
-      <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 flex justify-between items-center">
-        <span>แนวเพลง (Genres)</span>
+    <SectionCard theme={theme} className="!p-5 border-indigo-500/5">
+      <h3 className="text-[10px] font-black text-gray-500 uppercase mb-4 flex justify-between items-center tracking-widest">
+        <span className="flex items-center gap-1.5"><Disc size={12} className="text-indigo-400 rotate-slow" /> GENRE MATRIX (SELECT MULTIPLE)</span>
         {selectedGenres.length > 0 && (
-          <span className="text-indigo-500 lowercase font-medium">{selectedGenres.length} selected</span>
+          <span className="text-indigo-400 font-mono font-black text-[10px] lowercase">{selectedGenres.length} selected</span>
         )}
       </h3>
-      <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-2">
+      <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
         {genres.map(genre => {
           const isActive = selectedGenres.includes(genre);
           return (
             <button 
               key={genre} 
+              type="button"
               onClick={() => toggleGenre(genre)} 
-              className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
+              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 border ${
                 isActive 
-                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-500/20' 
+                  ? 'bg-gradient-to-r from-indigo-650 to-indigo-700 border-indigo-500 text-white shadow-md shadow-indigo-500/10' 
                   : theme === 'dark' 
-                    ? 'bg-[#1a1a1a] border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300' 
-                    : 'bg-gray-100 border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'
+                    ? 'bg-[#060608] border-gray-901 text-gray-500 hover:border-gray-800 hover:text-gray-300' 
+                    : 'bg-gray-50 border-gray-150 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/20'
               }`}
             >
               {genre}

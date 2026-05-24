@@ -32,6 +32,9 @@ export interface AutoConfigData {
   poemType: string;
   linesPerSection: number;
   duration: number;
+  suggestedTitle: string;
+  references: string;
+  inspirations: string;
   reason: string;
 }
 

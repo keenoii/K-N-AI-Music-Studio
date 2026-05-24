@@ -7,7 +7,7 @@ import Footer from './components/Footer';
 import { generateSong, analyzeAndConfigure, generateCoverImage } from './services/geminiService';
 import { SunoConfig } from './types';
 
-const GENRES_LIST = ['Pop', 'Rock', 'Jazz', 'Hip-hop', 'R&B', 'Country', 'Folk', 'Blues', 'Electronic', 'Dance', 'House', 'Techno', 'Ambient', 'Classical', 'Reggae', 'Ska', 'Punk', 'Metal', 'Alternative', 'Indie', 'Acoustic', 'Soul', 'Funk', 'Disco', 'Trap', 'Lo-fi', 'Chill', 'Ballad'];
+const GENRES_LIST = ['Pop', 'Rock', 'Jazz', 'Hip-hop', 'R&B', 'Country', 'Folk', 'Blues', 'Electronic', 'Dance', 'House', 'Techno', 'Ambient', 'Classical', 'Reggae', 'Ska', 'Punk', 'Metal', 'Alternative', 'Indie', 'Acoustic', 'Soul', 'Funk', 'Disco', 'Trap', 'Lo-fi', 'Chill', 'Ballad', 'Auto-tune'];
 const VALID_KEYS = ['C', 'Cm', 'C#', 'C#m', 'D', 'Dm', 'Eb', 'E', 'Em', 'F', 'Fm', 'F#', 'F#m', 'G', 'Gm', 'Ab', 'A', 'Am', 'Bb', 'B', 'Bm'];
 const IMAGE_STYLES = ['Cinematic', 'Digital Art', 'Oil Painting', 'Synthwave', 'Anime', 'Photorealistic', 'Neon Punk', 'Minimalist', 'Vintage Photo'];
 const LANGUAGE_OPTIONS = [
@@ -19,9 +19,9 @@ const LANGUAGE_OPTIONS = [
   { value: 'อีสาน', label: '🎭 ภาษาอีสาน' }
 ];
 const MODEL_OPTIONS = [
-  { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro', description: 'ดีที่สุดสำหรับการแต่งเพลงที่ซับซ้อนและเนื้อหาเชิงลึก' },
-  { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash', description: 'ทำงานรวดเร็ว แม่นยำ เหมาะสำหรับการร่างเพลงด่วน' },
-  { value: 'gemini-flash-lite-latest', label: 'Gemini Flash Lite', description: 'โมเดลขนาดเล็ก ประหยัดพลังงาน สำหรับงานทั่วไป' }
+  { value: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash (แนะนำ)', description: 'ประมวลผลเร็ว ทำงานแต่งเพลง วางโครงสร้าง และสัมผัสโคลงกลอนชั้นเลิศ' },
+  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro', description: 'ดีที่สุดสำหรับการสร้างสรรค์ระดับพรีเมียม ถ่ายทอดประเด็นละเอียดอ่อนและเนื้อร้องสองภาษา' },
+  { value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite', description: 'ประหยัดน้ำหนัก ลื่นไหล ออกแบบเค้าโครงบทเพลงได้อย่างรวดเร็วคุ้มค่า' }
 ];
 
 declare global {
@@ -39,16 +39,16 @@ const App: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const [prompt, setPrompt] = useState('บทเพลงรักที่ระเบิดอารมณ์ความเจ็บปวด...');
-  const [references, setReferences] = useState('แนวพี่เสก Loso, Bodyslam, เพลงร็อคยุค 90');
+  const [prompt, setPrompt] = useState('เรื่องราวความรักในโลกโซเชียลที่วนลูปแต่ไม่มีวันเป็นจริง...');
+  const [references, setReferences] = useState('แนว Jeff Satur, Three Man Down, Tilly Birds, หรือ Modern Pop-Rock สมัยใหม่');
   const [inspirations, setInspirations] = useState('');
   const [songTitle, setSongTitle] = useState('');
   const [generatedLyrics, setGeneratedLyrics] = useState(``);
   const [jsonPrompt, setJsonPrompt] = useState<SunoConfig | null>(null);
-  const [selectedModel, setSelectedModel] = useState('gemini-3-pro-preview');
+  const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash');
 
-  const [bpm, setBpm] = useState(60);
-  const [keyName, setKeyName] = useState('F#m');
+  const [bpm, setBpm] = useState(120);
+  const [keyName, setKeyName] = useState('C');
   const [duration, setDuration] = useState(3.5);
   const [vocalType, setVocalType] = useState('ชาย');
   const [selectedGenres, setSelectedGenres] = useState<string[]>(['Rock', 'Alternative', 'Acoustic']);
@@ -56,6 +56,7 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState('ไทย');
   const [autoTitle, setAutoTitle] = useState(true);
   const [autoMelody, setAutoMelody] = useState(true);
+  const [linesPerSection, setLinesPerSection] = useState(4);
 
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [imageStyle, setImageStyle] = useState('Cinematic');
@@ -143,6 +144,10 @@ const App: React.FC = () => {
       if (data.bpm) setBpm(data.bpm);
       if (data.vocalType) setVocalType(data.vocalType);
       if (data.poemType) setPoemType(data.poemType);
+      if (data.linesPerSection) setLinesPerSection(data.linesPerSection);
+      if (data.suggestedTitle && autoTitle) setSongTitle(data.suggestedTitle);
+      if (data.references) setReferences(data.references);
+      if (data.inspirations) setInspirations(data.inspirations);
 
       // Robust Key Matching
       if (data.key) {
@@ -184,8 +189,9 @@ const App: React.FC = () => {
     try {
       const data = await generateSong({ 
         prompt, references, inspirations, language, genres: selectedGenres, bpm, key: keyName, 
-        vocalType, linesPerSection: 4, poemType, autoMelody, autoTitle, duration, 
-        model: selectedModel 
+        vocalType, linesPerSection, poemType, autoMelody, autoTitle, duration, 
+        model: selectedModel,
+        title: songTitle || undefined // Pass the pre-defined title
       });
       setGeneratedLyrics(data.lyrics);
       setJsonPrompt(data.suno_config);
@@ -301,7 +307,7 @@ const App: React.FC = () => {
       <Header theme={theme} setTheme={setTheme} isApiConnected={isApiConnected} onConnectApi={handleConnectApi} successMsg={successMsg} />
       <main className="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Sidebar 
-          {...{theme, prompt, setPrompt, references, setReferences, inspirations, setInspirations, songTitle, setSongTitle, bpm, setBpm, keyName, setKeyName, duration, setDuration, vocalType, setVocalType, poemType, setPoemType, language, setLanguage, autoTitle, setAutoTitle, autoMelody, setAutoMelody, selectedGenres, toggleGenre, genres: GENRES_LIST, imageAspectRatio, setImageAspectRatio, imageStyle, setImageStyle, imageStyles: IMAGE_STYLES, languageOptions: LANGUAGE_OPTIONS, isAutoConfiguring, isGenerating, isGeneratingImage, isApiConnected, handleAutoConfigure, handleGenerate, handleGenerateImage, handleConnectApi, error, selectedModel, setSelectedModel, modelOptions: MODEL_OPTIONS, handleResetAll, handleClearPrompt}}
+          {...{theme, prompt, setPrompt, references, setReferences, inspirations, setInspirations, songTitle, setSongTitle, bpm, setBpm, keyName, setKeyName, duration, setDuration, linesPerSection, setLinesPerSection, vocalType, setVocalType, poemType, setPoemType, language, setLanguage, autoTitle, setAutoTitle, autoMelody, setAutoMelody, selectedGenres, toggleGenre, genres: GENRES_LIST, imageAspectRatio, setImageAspectRatio, imageStyle, setImageStyle, imageStyles: IMAGE_STYLES, languageOptions: LANGUAGE_OPTIONS, isAutoConfiguring, isGenerating, isGeneratingImage, isApiConnected, handleAutoConfigure, handleGenerate, handleGenerateImage, handleConnectApi, error, selectedModel, setSelectedModel, modelOptions: MODEL_OPTIONS, handleResetAll, handleClearPrompt}}
         />
         <Editor 
           {...{theme, generatedLyrics, setGeneratedLyrics, songTitle, duration, selectedGenres, bpm, keyName, inspirations, isGenerating, coverImage, imageAspectRatio, jsonPrompt, handleNewProject, handleSave, handleCopy, handleExport}}
